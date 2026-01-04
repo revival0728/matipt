@@ -56,6 +56,7 @@ impl AstParser {
         let pa_result: Vec<Stmt> = Vec::new();
         let lex_result = self.lexer.lex(code);
 
+        // 0 -> Null
         // 1 -> Op(u8),   // Operator Hash
         // 2 -> Par(u8),  // Paren or Bracket ID
         // 3 -> Key(u8),  // Keyword ID

@@ -1,6 +1,31 @@
 mod lexer;
 pub mod parser;
 
+/*
+Ast Structure
+
+Ast: Vec<Stmt> |
+        Stmt_0
+        Stmt_1
+        Stmt_2
+        ...
+
+Stmt: FunStmt | Vec<Box<Expr>>
+
+FunStmt: Vec<Box<Expr>>  // Use when script declares a function
+
+Box<Expr>: BinOp | FunExpr | Idnt
+
+BinOp |
+    lhs: Box<Expr>
+    rhs: Box<Expr>
+
+FunExpr: Vec<Box<Expr>>  // Use When script makes a function call
+
+Idnt: Identifier
+
+*/
+
 pub enum Expr {
     Add(BinOp),
     Sub(BinOp),
@@ -28,22 +53,22 @@ pub enum Idnt {
 
 pub struct FunExpr {
     pub id: u32, // Var ID
-    pub arg: Vec<Idnt>,
+    pub arg: Vec<Box<Expr>>,
 }
 
 pub enum Stmt {
     Fun(FunStmt),
-    Raw(Vec<Expr>),
+    Raw(Vec<Box<Expr>>),
 }
 
 pub struct FunStmt {
     pub id: u32, // Var ID
     pub param: Vec<Var>,
-    pub expr: Vec<Expr>,
+    pub expr: Vec<Box<Expr>>,
 }
 
 enum LexToken {
-    Op(u8),   // Operator Hash
+    Op(u8),   // Operator ID
     Par(u8),  // Paren or Bracket ID
     Key(u8),  // Keyword ID
     Var(Var), // Variable ID
@@ -66,7 +91,7 @@ impl LexResult {
 
 #[derive(Debug)]
 pub struct AstParseError {
-    msg: String,
+    msg: &'static str,
     info: (usize, usize), // (line number, word number)
 }
 
