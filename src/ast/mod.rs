@@ -1,0 +1,85 @@
+mod lexer;
+pub mod parser;
+
+pub enum Expr {
+    Add(BinOp),
+    Sub(BinOp),
+    Mul(BinOp),
+    Div(BinOp),
+    Pow(BinOp),
+    Set(BinOp),
+    Fun(FunExpr),
+    Idnt(Idnt),
+}
+
+pub struct BinOp {
+    pub lhs: Box<Expr>,
+    pub rhs: Box<Expr>,
+}
+
+pub type Var = u32;
+
+pub type Raw = f32;
+
+pub enum Idnt {
+    Var(Var),
+    Raw(Raw),
+}
+
+pub struct FunExpr {
+    pub id: u32, // Var ID
+    pub arg: Vec<Idnt>,
+}
+
+pub enum Stmt {
+    Fun(FunStmt),
+    Raw(Vec<Expr>),
+}
+
+pub struct FunStmt {
+    pub id: u32, // Var ID
+    pub param: Vec<Var>,
+    pub expr: Vec<Expr>,
+}
+
+enum LexToken {
+    Op(u8),   // Operator Hash
+    Par(u8),  // Paren or Bracket ID
+    Key(u8),  // Keyword ID
+    Var(Var), // Variable ID
+    Raw(Raw), // Raw value
+}
+
+struct LexResult {
+    pub token: LexToken,
+    pub info: (usize, usize), // (line number, word number)
+}
+
+impl LexResult {
+    pub fn new(token: LexToken, ln: usize, wn: usize) -> LexResult {
+        LexResult {
+            token,
+            info: (ln, wn),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct AstParseError {
+    msg: String,
+    info: (usize, usize), // (line number, word number)
+}
+
+impl std::fmt::Display for AstParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "AstParseError({}:{}): {}",
+            self.info.0, self.info.1, self.msg
+        )
+    }
+}
+
+impl std::error::Error for AstParseError {}
+
+pub type Result = std::result::Result<Vec<Stmt>, AstParseError>;
