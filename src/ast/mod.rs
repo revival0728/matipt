@@ -42,17 +42,17 @@ pub struct BinOp {
     pub rhs: Box<Expr>,
 }
 
-pub type Var = u32;
-
-pub type Raw = f32;
-
 pub enum Idnt {
     Var(Var),
     Raw(Raw),
 }
 
+pub type Var = u32;
+
+pub type Raw = f32;
+
 pub struct FunExpr {
-    pub id: u32, // Var ID
+    pub id: Var, // Var ID
     pub arg: Vec<Box<Expr>>,
 }
 
