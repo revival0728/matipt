@@ -67,14 +67,50 @@ pub struct FunStmt {
     pub expr: Vec<Box<Expr>>,
 }
 
-enum LexToken {
-    Op(u8),   // Operator ID
-    Par(u8),  // Paren or Bracket ID
-    Key(u8),  // Keyword ID
-    Var(Var), // Variable ID
-    Raw(Raw), // Raw value
+impl FunStmt {
+    pub fn new() -> FunStmt {
+        FunStmt {
+            id: 0,
+            param: Vec::new(),
+            expr: Vec::new(),
+        }
+    }
 }
 
+#[derive(Clone, Copy)]
+enum OpSet {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Pow,
+}
+
+#[derive(Clone, Copy)]
+enum ParSet {
+    LPar,
+    RPar,
+    LBkt,
+    RBkt,
+}
+
+#[derive(Clone, Copy)]
+enum KeySet {
+    Func,
+}
+
+#[derive(Clone, Copy)]
+enum LexToken {
+    Null,
+    Op(OpSet),   // Operator ID
+    Par(ParSet), // Paren or Bracket ID
+    Key(KeySet), // Keyword ID
+    Var(Var),    // Variable ID
+    Raw(Raw),    // Raw value
+    Endl,        // End of line
+}
+
+#[derive(Clone, Copy)]
 struct LexResult {
     pub token: LexToken,
     pub info: (usize, usize), // (line number, word number)
@@ -89,10 +125,23 @@ impl LexResult {
     }
 }
 
+#[derive(PartialEq, Debug)]
+enum ParseState {
+    Null,
+    Expr,
+    FunDecl,
+}
+
 #[derive(Debug)]
 pub struct AstParseError {
     msg: &'static str,
     info: (usize, usize), // (line number, word number)
+}
+
+impl AstParseError {
+    pub fn new(msg: &'static str, info: (usize, usize)) -> AstParseError {
+        AstParseError { msg, info }
+    }
 }
 
 impl std::fmt::Display for AstParseError {

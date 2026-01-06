@@ -104,7 +104,7 @@ where
         self.get_mut_from_hashv(hv, k)
     }
 
-    pub fn insert_str(&mut self, k: &str, v: V) {
+    pub fn insert_with_str(&mut self, k: &str, v: V) {
         let hv = self.hash_str(k);
         for (s, val) in &mut self.table[hv] {
             if s == k {
@@ -115,7 +115,7 @@ where
         self.table[hv].push((k.to_string(), v));
     }
 
-    pub fn insert_string(&mut self, k: &String, v: V) {
+    pub fn insert_with_string(&mut self, k: &String, v: V) {
         let hv = self.hash_string(k);
         for (s, val) in &mut self.table[hv] {
             if s == k {
@@ -124,6 +124,14 @@ where
             }
         }
         self.table[hv].push((k.to_string(), v));
+    }
+
+    pub fn contains_key_with_str(&self, k: &str) -> bool {
+        self.get_from_str(k).is_some()
+    }
+
+    pub fn contains_key_with_string(&self, k: &String) -> bool {
+        self.get_from_string(k).is_some()
     }
 }
 
@@ -165,9 +173,9 @@ mod test {
     #[test]
     fn insert() {
         let mut map = SSMap::<i32>::new();
-        map.insert_str("abc", 1);
-        map.insert_str("def", 1);
-        map.insert_string(&"abc".to_string(), 2);
+        map.insert_with_str("abc", 1);
+        map.insert_with_str("def", 1);
+        map.insert_with_string(&"abc".to_string(), 2);
 
         let abc_hv = map.hash_str("abc");
         let def_hv = map.hash_str("def");
@@ -180,7 +188,7 @@ mod test {
     #[test]
     fn get_and_index() {
         let mut map = SSMap::<i32>::new();
-        map.insert_str("abc", 1);
+        map.insert_with_str("abc", 1);
 
         let str_get = map.get_from_str("abc").unwrap();
         let index_get = map["abc"];
@@ -193,8 +201,8 @@ mod test {
     #[test]
     fn get_mut() {
         let mut map = SSMap::<i32>::new();
-        map.insert_str("str", 1);
-        map.insert_str("string", 1);
+        map.insert_with_str("str", 1);
+        map.insert_with_str("string", 1);
 
         *map.get_mut_from_str("str").unwrap() = 2;
         *map.get_mut_from_string(&"string".to_string()).unwrap() = 2;

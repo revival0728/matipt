@@ -1,69 +1,58 @@
-use crate::ast::{LexResult, LexToken, Raw, Var};
-use std::{
-    collections::{HashMap, LinkedList},
-    hash::{DefaultHasher, Hash, Hasher},
-};
+use crate::ast::{KeySet, LexResult, LexToken, OpSet, ParSet, Raw, Var};
+use crate::hash::SSMap;
 
 pub struct Lexer {
-    hasher: DefaultHasher,
-    var_map: HashMap<u64, Var>,
+    var_map: SSMap<u32>,
     vid_ceil: Var,
 }
 
 impl Lexer {
     pub fn new() -> Lexer {
-        let hasher = DefaultHasher::new();
-        let var_map: HashMap<u64, Var> = HashMap::new();
+        let var_map = SSMap::<u32>::new();
         let vid_ceil: Var = 0;
 
-        Lexer {
-            hasher,
-            var_map,
-            vid_ceil,
-        }
+        Lexer { var_map, vid_ceil }
     }
 
-    pub fn get_opid(&mut self, s: &str) -> Option<u8> {
+    pub fn get_opid(&mut self, s: &str) -> Option<OpSet> {
         Some(match s {
-            "+" => 0,
-            "-" => 1,
-            "*" => 2,
-            "/" => 3,
-            "**" => 4,
+            "+" => OpSet::Add,
+            "-" => OpSet::Sub,
+            "*" => OpSet::Mul,
+            "/" => OpSet::Div,
+            "**" => OpSet::Pow,
             _ => return None,
         })
     }
 
-    pub fn get_kid(&mut self, s: &str) -> Option<u8> {
+    pub fn get_kid(&mut self, s: &str) -> Option<KeySet> {
         Some(match s {
-            "func" => 0,
+            "func" => KeySet::Func,
             _ => return None,
         })
     }
 
     pub fn get_vid(&mut self, s: &str) -> Var {
-        s.hash(&mut self.hasher);
-        let h = self.hasher.finish();
-        if self.var_map.contains_key(&h) {
-            return self.var_map[&h];
+        if self.var_map.contains_key_with_str(&s) {
+            return self.var_map[s];
         }
-        let vid = self.var_map.insert(h, self.vid_ceil).unwrap();
+        self.var_map.insert_with_str(s, self.vid_ceil);
         self.vid_ceil += 1;
-        vid
+        self.vid_ceil - 1
     }
 
-    pub fn get_pid(&self, s: &str) -> u8 {
+    pub fn get_pid(&self, s: &str) -> ParSet {
         match s {
-            "(" => 0,
-            ")" => 1,
-            "{" => 2,
-            "}" => 3,
+            "(" => ParSet::LPar,
+            ")" => ParSet::RPar,
+            "{" => ParSet::LBkt,
+            "}" => ParSet::RBkt,
             _ => panic!("get_pid(): the argument is not a paren or a bracket."),
         }
     }
 
-    pub fn lex(&mut self, code: &str) -> LinkedList<LexResult> {
-        let mut lex_result: LinkedList<LexResult> = LinkedList::new();
+    pub fn lex(&mut self, code: &str) -> Vec<LexResult> {
+        let mut lex_result = Vec::<LexResult>::new();
 
         macro_rules! is_op {
             ($ch:ident) => {{ self.get_opid($ch).is_some() }};
@@ -92,10 +81,10 @@ impl Lexer {
         }
 
         for (ln, line) in code.trim().split('\n').enumerate() {
-            for (wn, s) in line.trim().split(' ').enumerate() {
+            for (wn, s) in line.trim().split_whitespace().enumerate() {
                 macro_rules! push_result {
                     ($lex_token:expr) => {
-                        lex_result.push_back(LexResult::new($lex_token, ln, wn));
+                        lex_result.push(LexResult::new($lex_token, ln + 1, wn + 1));
                     };
                 }
                 if is_op!(s) {
@@ -103,7 +92,7 @@ impl Lexer {
                     continue;
                 }
                 if is_keyw!(s) {
-                    push_result!(LexToken::Key(self.get_opid(s).unwrap()));
+                    push_result!(LexToken::Key(self.get_kid(s).unwrap()));
                     continue;
                 }
                 if is_par!(s) {
@@ -116,6 +105,7 @@ impl Lexer {
                 }
                 push_result!(LexToken::Var(self.get_vid(s)));
             }
+            lex_result.push(LexResult::new(LexToken::Endl, ln + 1, 0));
         }
 
         lex_result
