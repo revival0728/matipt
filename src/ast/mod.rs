@@ -99,6 +99,7 @@ enum KeySet {
     Func,
 }
 
+// TODO: add comma for func NAME(p1, p2, p3, ...) {}
 #[derive(Clone, Copy)]
 enum LexToken {
     Null,

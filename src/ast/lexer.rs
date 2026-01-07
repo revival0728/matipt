@@ -80,6 +80,8 @@ impl Lexer {
             };
         }
 
+        // TODO: Fix Lexer
+        // s can be "1*2+3*4" or somthing like that
         for (ln, line) in code.trim().split('\n').enumerate() {
             for (wn, s) in line.trim().split_whitespace().enumerate() {
                 macro_rules! push_result {
